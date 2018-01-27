@@ -1,0 +1,26 @@
+package: github.com/aquiladev/monday
+import:
+- package: github.com/azure/azure-sdk-for-go
+  version: v12.2.0-beta
+  subpackages:
+  - storage
+- package: github.com/btcsuite/btcd
+  subpackages:
+  - btcec
+  - chaincfg
+- package: github.com/btcsuite/btclog
+- package: github.com/btcsuite/btcutil
+- package: github.com/btcsuite/goleveldb
+  subpackages:
+  - leveldb
+- package: github.com/jessevdk/go-flags
+  version: v1.3.0
+- package: github.com/jrick/logrotate
+  subpackages:
+  - rotator
+- package: github.com/pkg/errors
+  version: v0.8.0
+- package: github.com/shirou/gopsutil
+  version: v2.17.12
+  subpackages:
+  - disk

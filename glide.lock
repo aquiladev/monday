@@ -1,0 +1,80 @@
+hash: 15a703811d294f57ef6745658bd5fe6d11c4f1c618231b9ea7895a580b808627
+updated: 2018-01-27T20:51:35.2022725+01:00
+imports:
+- name: github.com/azure/azure-sdk-for-go
+  version: eae258195456be76b2ec9ad2ee2ab63cdda365d9
+  subpackages:
+  - storage
+- name: github.com/Azure/go-autorest
+  version: c2a68353555b68de3ee8455a4fd3e890a0ac6d99
+  subpackages:
+  - autorest
+  - autorest/adal
+  - autorest/azure
+  - autorest/date
+- name: github.com/btcsuite/btcd
+  version: fe786c93b6f4e0c96d6b19157b72963a9b50293d
+  subpackages:
+  - btcec
+  - chaincfg
+  - chaincfg/chainhash
+  - wire
+- name: github.com/btcsuite/btclog
+  version: 84c8d2346e9fc8c7b947e243b9c24e6df9fd206a
+- name: github.com/btcsuite/btcutil
+  version: 501929d3d046174c3d39f0ea54ece471aa17238c
+  subpackages:
+  - base58
+  - bech32
+- name: github.com/btcsuite/goleveldb
+  version: 7834afc9e8cd15233b6c3d97e12674a31ca24602
+  subpackages:
+  - leveldb
+  - leveldb/cache
+  - leveldb/comparer
+  - leveldb/errors
+  - leveldb/filter
+  - leveldb/iterator
+  - leveldb/journal
+  - leveldb/memdb
+  - leveldb/opt
+  - leveldb/storage
+  - leveldb/table
+  - leveldb/util
+- name: github.com/btcsuite/snappy-go
+  version: 0bdef8d067237991ddaa1bb6072a740bc40601ba
+- name: github.com/dgrijalva/jwt-go
+  version: dbeaa9332f19a944acb5736b4456cfcc02140e29
+- name: github.com/go-ole/go-ole
+  version: a41e3c4b706f6ae8dfbff342b06e40fa4d2d0506
+  subpackages:
+  - oleutil
+- name: github.com/jessevdk/go-flags
+  version: 96dc06278ce32a0e9d957d590bb987c81ee66407
+- name: github.com/jrick/logrotate
+  version: a93b200c26cbae3bb09dd0dc2c7c7fe1468a034a
+  subpackages:
+  - rotator
+- name: github.com/marstr/guid
+  version: 8bdf7d1a087ccc975cf37dd6507da50698fd19ca
+- name: github.com/pkg/errors
+  version: 645ef00459ed84a119197bfb8d8205042c6df63d
+- name: github.com/satori/go.uuid
+  version: 36e9d2ebbde5e3f13ab2e25625fd453271d6522e
+- name: github.com/shirou/gopsutil
+  version: 7ec06ec280df1dd1f08befc535049d49d63ae18a
+  subpackages:
+  - disk
+  - internal/common
+- name: github.com/StackExchange/wmi
+  version: 5d049714c4a64225c3c79a7cf7d02f7fb5b96338
+- name: golang.org/x/crypto
+  version: 0efb9460aaf800c6376acf625be2853bceac2e06
+  subpackages:
+  - ripemd160
+- name: golang.org/x/sys
+  version: ff2a66f350cefa5c93a634eadb5d25bb60c85a9c
+  subpackages:
+  - unix
+  - windows
+testImports: []
