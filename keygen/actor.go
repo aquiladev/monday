@@ -3,15 +3,13 @@ package keygen
 import (
 	"math/big"
 	"runtime"
-	"sync/atomic"
 	"sync"
+	"sync/atomic"
 	"time"
 
-	"github.com/aquiladev/monday/database"
-	"github.com/aquiladev/monday/database/policy"
 	"github.com/aquiladev/monday/pool"
-	"github.com/aquiladev/monday/util"
 	"github.com/aquiladev/monday/storage"
+	"github.com/aquiladev/monday/util"
 )
 
 type Actor struct {
@@ -23,11 +21,8 @@ type Actor struct {
 	handledLogPg int64
 	lastLogTime  time.Time
 
-	rangeUrl  string
-	pool      pool.Pool
-	keepLocal bool
-	db        database.DB
-	policies  []policy.StoragePolicy
+	rangeUrl string
+	pool     pool.Pool
 }
 
 func (a *Actor) start() {
@@ -82,11 +77,9 @@ func (a *Actor) generate(config *RangeConfig) {
 		pages = restPages
 	}
 
-	go func() {
-		if err := a.write(keys); err != nil {
-			log.Error(err)
-		}
-	}()
+	if err := a.pool.Put(&storage.Message{Keys: keys}); err != nil {
+		log.Error(err)
+	}
 }
 
 func (a *Actor) generateBucket(from *big.Int, amount int) []*storage.KeyPair {
@@ -130,44 +123,6 @@ func (a *Actor) generatePage(page *big.Int) []*storage.KeyPair {
 	}
 
 	return keys
-}
-
-func (a *Actor) write(keys []*storage.KeyPair) error {
-	if a.keepLocal {
-		err := a.writeLocal(keys)
-		if err == nil {
-			return nil
-		}
-		log.Error(err)
-	}
-
-	return a.pool.Put(&storage.Message{Keys: keys})
-}
-
-func (a *Actor) writeLocal(keys []*storage.KeyPair) error {
-	if err := a.checkPolicies(); err != nil {
-		return err
-	}
-
-	list := make([]*database.KeyValue, len(keys))
-	for i, k := range keys {
-		list[i] = &database.KeyValue{
-			K: []byte(k.PublicKey),
-			V: []byte(k.PrivateKey),
-		}
-	}
-	return a.db.PutBatch(list)
-}
-
-func (a *Actor) checkPolicies() error {
-	for _, p := range a.policies {
-		_, err := p.IsAccept()
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (a *Actor) logProgress(force bool) {
@@ -220,19 +175,10 @@ func (a *Actor) WaitForShutdown() {
 	a.wg.Wait()
 }
 
-func NewActor(
-	configUrl string,
-	pool pool.Pool,
-	keepLocal bool,
-	db database.DB,
-	policies []policy.StoragePolicy) *Actor {
-
+func NewActor(configUrl string, pool pool.Pool) *Actor {
 	return &Actor{
 		rangeUrl:    configUrl,
 		pool:        pool,
-		keepLocal:   keepLocal,
-		db:          db,
-		policies:    policies,
 		quit:        make(chan struct{}),
 		lastLogTime: time.Now(),
 	}

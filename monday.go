@@ -70,7 +70,8 @@ func mondayMain(workerChan chan<- *worker) error {
 		return err
 	}
 
-	keyPool := pool.NewBlobPool(blobRepo, cfg.NumOfMessages)
+	memQueue := pool.NewMemQueue(cfg.MemPoolCapacity)
+	keyPool := pool.NewMultiLevelPool(memQueue, blobRepo, cfg.NumOfMessages, cfg.KeepLocal)
 
 	// Create worker and start it.
 	worker := newWorker(cfg, db, keyPool, policies)

@@ -28,18 +28,20 @@ type config struct {
 	StorageBlobName    string  `long:"storageblobname" description:"Storage blob name for pool."`
 	RangeUrl           string  `long:"rangeurl" description:"Endpoint for range retrieving."`
 	NumOfMessages      int     `long:"numofmessages" description:"Number of messages for handling."`
+	MemPoolCapacity    int     `long:"mempoolcapacity" description:"Memory pool capacity."`
 }
 
 const (
-	defaultConfigFilename = "monday.conf"
-	defaultLogDirname     = "logs"
-	defaultLogLevel       = "info"
-	defaultLogFilename    = "monday.log"
-	defaultNumOfMessages  = 2
-	defaultKeepLocal      = false
-	defaultDiskUsage      = 95.0
-	defaultDbSize         = 214748364800 //200 Gb
-	sampleConfigFilename  = "sample.conf"
+	defaultConfigFilename  = "monday.conf"
+	defaultLogDirname      = "logs"
+	defaultLogLevel        = "info"
+	defaultLogFilename     = "monday.log"
+	defaultNumOfMessages   = 2
+	defaultMemPoolCapacity = 2
+	defaultKeepLocal       = false
+	defaultDiskUsage       = 95.0
+	defaultDbSize          = 214748364800 //200 Gb
+	sampleConfigFilename   = "sample.conf"
 )
 
 var (
@@ -154,13 +156,14 @@ func newConfigParser(cfg *config, options flags.Options) *flags.Parser {
 func loadConfig() (*config, []string, error) {
 	// Default config
 	cfg := config{
-		ConfigFile:    defaultConfigFile,
-		DebugLevel:    defaultLogLevel,
-		LogDir:        defaultLogDir,
-		KeepLocal:     defaultKeepLocal,
-		MaxDiskUsage:  defaultDiskUsage,
-		MaxDbSize:     defaultDbSize,
-		NumOfMessages: defaultNumOfMessages,
+		ConfigFile:      defaultConfigFile,
+		DebugLevel:      defaultLogLevel,
+		LogDir:          defaultLogDir,
+		KeepLocal:       defaultKeepLocal,
+		MaxDiskUsage:    defaultDiskUsage,
+		MaxDbSize:       defaultDbSize,
+		NumOfMessages:   defaultNumOfMessages,
+		MemPoolCapacity: defaultMemPoolCapacity,
 	}
 
 	// Pre-parse the command line options to see if an alternative config

@@ -65,7 +65,7 @@ func (w *worker) WaitForShutdown() {
 func newWorker(cfg *config, db database.DB, pool pool.Pool, policies []policy.StoragePolicy) *worker {
 	return &worker{
 		quit:        make(chan struct{}),
-		keyGenActor: keygen.NewActor(cfg.RangeUrl, pool, cfg.KeepLocal, db, policies),
+		keyGenActor: keygen.NewActor(cfg.RangeUrl, pool),
 		writeActor:  writer.NewActor(pool, db, policies),
 	}
 }
