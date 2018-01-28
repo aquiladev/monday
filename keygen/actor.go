@@ -49,10 +49,12 @@ out:
 			continue
 		}
 
-		log.Infof("Fetched read config: %+v", config)
+		log.Infof("Fetched range: %+v", config)
 		if err := a.generate(config); err != nil {
 			log.Error(err)
 		}
+
+		a.handledLogPg++
 		a.logProgress(false)
 	}
 
@@ -139,8 +141,6 @@ func (a *Actor) queueKeys(keys []*storage.KeyPair) error {
 }
 
 func (a *Actor) logProgress(force bool) {
-	a.handledLogPg++
-
 	now := time.Now()
 	duration := now.Sub(a.lastLogTime)
 	if duration < time.Second*time.Duration(10) && !force {

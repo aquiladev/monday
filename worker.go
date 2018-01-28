@@ -7,6 +7,7 @@ import (
 	"github.com/aquiladev/monday/database/policy"
 	"github.com/aquiladev/monday/keygen"
 	"github.com/aquiladev/monday/pool"
+	"github.com/aquiladev/monday/writer"
 )
 
 type worker struct {
@@ -15,6 +16,7 @@ type worker struct {
 	quit     chan struct{}
 
 	keyGenActor *keygen.Actor
+	writeActor  *writer.Actor
 }
 
 func (w *worker) Start() {
@@ -26,6 +28,10 @@ func (w *worker) Start() {
 	workerLog.Trace("Starting worker")
 
 	w.keyGenActor.Start()
+
+	if cfg.KeepLocal {
+		w.writeActor.Start()
+	}
 }
 
 func (w *worker) Stop() error {
@@ -39,6 +45,10 @@ func (w *worker) Stop() error {
 
 	go w.keyGenActor.Stop()
 
+	if cfg.KeepLocal {
+		go w.writeActor.Stop()
+	}
+
 	// Signal the remaining goroutines to quit.
 	close(w.quit)
 	return nil
@@ -46,11 +56,16 @@ func (w *worker) Stop() error {
 
 func (w *worker) WaitForShutdown() {
 	w.keyGenActor.WaitForShutdown()
+
+	if cfg.KeepLocal {
+		w.writeActor.WaitForShutdown()
+	}
 }
 
 func newWorker(cfg *config, db database.DB, pool pool.Pool, policies []policy.StoragePolicy) *worker {
 	return &worker{
 		quit:        make(chan struct{}),
 		keyGenActor: keygen.NewActor(cfg.RangeUrl, pool, cfg.KeepLocal, db, policies),
+		writeActor:  writer.NewActor(pool, db, policies),
 	}
 }

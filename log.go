@@ -7,6 +7,7 @@ import (
 
 	"github.com/aquiladev/monday/keygen"
 	"github.com/aquiladev/monday/pool"
+	"github.com/aquiladev/monday/writer"
 	"github.com/btcsuite/btclog"
 	"github.com/jrick/logrotate/rotator"
 )
@@ -31,6 +32,7 @@ var (
 
 	log       = backendLog.Logger("MOND")
 	keygenLog = backendLog.Logger("GENA")
+	writerLog = backendLog.Logger("WRIT")
 	workerLog = backendLog.Logger("WORK")
 	poolLog   = backendLog.Logger("POOL")
 )
@@ -38,12 +40,14 @@ var (
 // Initialize package-global logger variables.
 func init() {
 	keygen.UseLogger(keygenLog)
+	writer.UseLogger(writerLog)
 	pool.UseLogger(poolLog)
 }
 
 var subsystemLoggers = map[string]btclog.Logger{
 	"GANT": log,
 	"GENA": keygenLog,
+	"WRIT": workerLog,
 	"WORK": workerLog,
 	"POOL": poolLog,
 }

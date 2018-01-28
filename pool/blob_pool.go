@@ -32,7 +32,7 @@ func (q *BlobPool) Put(msg *storage.Message) error {
 	return q.blobRepo.Insert(blobName, data)
 }
 
-func (q *BlobPool) Pop() ([]storage.Message, error) {
+func (q *BlobPool) Pop() ([]*storage.Message, error) {
 	blobs, err := q.blobRepo.Get()
 	if err != nil {
 		return nil, err
@@ -44,7 +44,7 @@ func (q *BlobPool) Pop() ([]storage.Message, error) {
 		length = q.numOfMessages
 	}
 
-	messages := make([]storage.Message, length)
+	messages := make([]*storage.Message, length)
 	for i := 0; i < length; i++ {
 		content, err := q.blobRepo.Read(&blobs[i])
 		if err != nil {
@@ -57,7 +57,7 @@ func (q *BlobPool) Pop() ([]storage.Message, error) {
 			return nil, err
 		}
 
-		messages[i] = msg
+		messages[i] = &msg
 	}
 
 	for i := 0; i < length; i++ {
