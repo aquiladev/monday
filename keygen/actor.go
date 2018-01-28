@@ -22,7 +22,7 @@ type Actor struct {
 	handledLogPg int64
 	lastLogTime  time.Time
 
-	configUrl string
+	rangeUrl  string
 	pool      pool.Pool
 	keepLocal bool
 	db        database.DB
@@ -39,11 +39,11 @@ out:
 		default:
 		}
 
-		config, err := fetchRange(a.configUrl)
+		config, err := fetchRange(a.rangeUrl)
 		if err != nil ||
 			len(config.Range.From) == 0 ||
 			len(config.Range.To) == 0 {
-			log.Errorf("Error while fetching config %+v", err)
+			log.Errorf("Error while fetching range %+v", err)
 
 			time.Sleep(time.Duration(1000) * time.Millisecond)
 			continue
@@ -65,7 +65,6 @@ func (a *Actor) generate(config *RangeConfig) error {
 	from, _ := util.Parse(config.Range.From)
 	to, _ := util.Parse(config.Range.To)
 	to = to.Add(to, big.NewInt(1))
-
 	pages := int(big.NewInt(0).Sub(to, from).Int64())
 
 	var keys []*storage.KeyPair
@@ -75,23 +74,7 @@ func (a *Actor) generate(config *RangeConfig) error {
 		keys = append(keys, pageKeys...)
 	}
 
-	if a.isAcceptPolicies() {
-		list := make([]*database.KeyValue, len(keys))
-		for i, k := range keys {
-			list[i] = &database.KeyValue{
-				K: []byte(k.PublicKey),
-				V: []byte(k.PrivateKey),
-			}
-		}
-
-		err := a.db.PutBatch(list)
-		if err == nil {
-			return nil
-		}
-		log.Error(err)
-	}
-
-	return a.queueKeys(keys)
+	return a.write(keys)
 }
 
 func (a *Actor) generatePage(page *big.Int) []*storage.KeyPair {
@@ -116,28 +99,42 @@ func (a *Actor) generatePage(page *big.Int) []*storage.KeyPair {
 	return keys
 }
 
-func (a *Actor) isAcceptPolicies() bool {
+func (a *Actor) write(keys []*storage.KeyPair) error {
 	if a.keepLocal {
-		policyAccepted := true
-		for _, p := range a.policies {
-			accept, err := p.IsAccept()
-			if err != nil {
-				log.Error(err)
-			}
-
-			policyAccepted = policyAccepted && accept
+		err := a.writeLocal(keys)
+		if err == nil {
+			return nil
 		}
-
-		return policyAccepted
+		log.Error(err)
 	}
 
-	return false
+	return a.pool.Put(&storage.Message{Keys: keys})
 }
 
-func (a *Actor) queueKeys(keys []*storage.KeyPair) error {
-	return a.pool.Put(&storage.Message{
-		Keys:             keys,
-	})
+func (a *Actor) writeLocal(keys []*storage.KeyPair) error {
+	if err := a.checkPolicies(); err != nil {
+		return err
+	}
+
+	list := make([]*database.KeyValue, len(keys))
+	for i, k := range keys {
+		list[i] = &database.KeyValue{
+			K: []byte(k.PublicKey),
+			V: []byte(k.PrivateKey),
+		}
+	}
+	return a.db.PutBatch(list)
+}
+
+func (a *Actor) checkPolicies() error {
+	for _, p := range a.policies {
+		_, err := p.IsAccept()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (a *Actor) logProgress(force bool) {
@@ -198,7 +195,7 @@ func NewActor(
 	policies []policy.StoragePolicy) *Actor {
 
 	return &Actor{
-		configUrl:   configUrl,
+		rangeUrl:    configUrl,
 		pool:        pool,
 		keepLocal:   keepLocal,
 		db:          db,
