@@ -2,6 +2,7 @@ package keygen
 
 import (
 	"math/big"
+	"runtime"
 	"sync/atomic"
 	"sync"
 	"time"
@@ -50,9 +51,7 @@ out:
 		}
 
 		log.Infof("Fetched range: %+v", config)
-		if err := a.generate(config); err != nil {
-			log.Error(err)
-		}
+		a.generate(config)
 
 		a.handledLogPg++
 		a.logProgress(false)
@@ -61,20 +60,54 @@ out:
 	a.wg.Done()
 }
 
-func (a *Actor) generate(config *RangeConfig) error {
+func (a *Actor) generate(config *RangeConfig) {
 	from, _ := util.Parse(config.Range.From)
 	to, _ := util.Parse(config.Range.To)
 	to = to.Add(to, big.NewInt(1))
 	pages := int(big.NewInt(0).Sub(to, from).Int64())
 
 	var keys []*storage.KeyPair
-	for i := 0; i < pages; i++ {
-		page := big.NewInt(0).Add(from, big.NewInt(int64(i)))
-		pageKeys := a.generatePage(page)
-		keys = append(keys, pageKeys...)
+	for pages > 0 {
+		bucketSize := runtime.NumCPU()
+		restPages := pages - bucketSize
+		rangeFrom := big.NewInt(0).Sub(to, big.NewInt(int64(pages)))
+		size := bucketSize
+
+		if restPages < 0 {
+			size = pages
+		}
+
+		bucketKeys := a.generateBucket(rangeFrom, size)
+		keys = append(keys, bucketKeys...)
+		pages = restPages
 	}
 
-	return a.write(keys)
+	go func() {
+		if err := a.write(keys); err != nil {
+			log.Error(err)
+		}
+	}()
+}
+
+func (a *Actor) generateBucket(from *big.Int, amount int) []*storage.KeyPair {
+	ch := make(chan bool)
+	defer close(ch)
+
+	var keys []*storage.KeyPair
+	for i := 0; i < amount; i++ {
+		page := big.NewInt(0).Add(from, big.NewInt(int64(i)))
+		go func(done chan bool) {
+			pageKeys := a.generatePage(page)
+			keys = append(keys, pageKeys...)
+			done <- true
+		}(ch)
+	}
+
+	for i := 0; i < amount; i++ {
+		<-ch
+	}
+
+	return keys
 }
 
 func (a *Actor) generatePage(page *big.Int) []*storage.KeyPair {
