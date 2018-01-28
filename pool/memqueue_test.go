@@ -5,6 +5,7 @@ import (
 
 	"github.com/aquiladev/monday/storage"
 	"github.com/btcsuite/btclog"
+	"github.com/stretchr/testify/assert"
 )
 
 type logWriter struct{}
@@ -14,13 +15,10 @@ func (logWriter) Write(p []byte) (n int, err error) {
 }
 
 func TestOverCapacity(t *testing.T) {
-	msgPool := MemQueue{
-		capacity: 0,
-	}
-	err := msgPool.Put(storage.Message{})
-	if err == nil {
-		t.Error("Wrong capacity")
-	}
+	msgPool := MemQueue{capacity: 0}
+	err := msgPool.Put(&storage.Message{})
+
+	assert.NotEmpty(t, err)
 }
 
 func TestPutPop(t *testing.T) {
@@ -31,12 +29,10 @@ func TestPutPop(t *testing.T) {
 	msgPool := NewMemQueue(10)
 
 	// put
-	msgPool.Put(data.Message{})
-	msgPool.Put(data.Message{})
+	msgPool.Put(&storage.Message{})
+	msgPool.Put(&storage.Message{})
 
-	if msgPool.Count() != 2 {
-		t.Error("Wrong amount")
-	}
+	assert.Equal(t, 2, msgPool.Count())
 
 	// pop
 	res, _ := msgPool.Pop(2)
