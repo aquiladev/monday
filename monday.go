@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/aquiladev/monday/database"
 	"github.com/aquiladev/monday/database/policy"
 	"github.com/aquiladev/monday/storage"
@@ -91,4 +94,12 @@ func mondayMain(workerChan chan<- *worker) error {
 	// server.
 	<-interrupt
 	return nil
+}
+
+func main() {
+	if err := mondayMain(nil); err != nil {
+		fmt.Printf("Error %+v", err)
+		os.Exit(1)
+	}
+	return
 }

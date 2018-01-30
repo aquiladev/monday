@@ -83,21 +83,19 @@ func (a *Actor) generate(config *RangeConfig) {
 }
 
 func (a *Actor) generateBucket(from *big.Int, amount int) []*storage.KeyPair {
-	ch := make(chan bool)
+	ch := make(chan []*storage.KeyPair)
 	defer close(ch)
 
 	var keys []*storage.KeyPair
 	for i := 0; i < amount; i++ {
 		page := big.NewInt(0).Add(from, big.NewInt(int64(i)))
-		go func(done chan bool) {
-			pageKeys := a.generatePage(page)
-			keys = append(keys, pageKeys...)
-			done <- true
+		go func(resCh chan []*storage.KeyPair) {
+			resCh <- a.generatePage(page)
 		}(ch)
 	}
 
 	for i := 0; i < amount; i++ {
-		<-ch
+		keys = append(keys, <-ch...)
 	}
 
 	return keys

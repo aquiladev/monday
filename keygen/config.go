@@ -16,15 +16,6 @@ type RangeConfig struct {
 	Range Range `json:"range"`
 }
 
-func mockConfig() *RangeConfig {
-	return &RangeConfig{
-		Range: Range{
-			From: "100152338825365595862742132647329357860924845607696427128849574371092698716",
-			To:   "100152338825365595862742132647329357860924845607696427128849574371092698815",
-		},
-	}
-}
-
 func fetchRange(url string) (*RangeConfig, error) {
 	resp, err := util.Get(url)
 	if err != nil {

@@ -44,6 +44,12 @@ out:
 }
 
 func (a *Actor) handleMessages() error {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error(r)
+		}
+	}()
+
 	if err := a.checkPolicies(); err != nil {
 		return err
 	}
