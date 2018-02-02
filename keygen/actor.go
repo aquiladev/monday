@@ -135,9 +135,9 @@ func (a *Actor) logProgress(force bool) {
 	tDuration := 10 * time.Millisecond * time.Duration(durationMillis/10)
 
 	// Log information about pages.
-	pageStr := "batches"
+	pageStr := "ranges"
 	if a.handledLogPg == 1 {
-		pageStr = "batch"
+		pageStr = "range"
 	}
 
 	log.Infof("Handled %d %s in the last %s",
