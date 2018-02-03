@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/aquiladev/monday/storage"
+	azurestorage "github.com/azure/azure-sdk-for-go/storage"
 )
 
 type MultiLevelPool struct {
@@ -60,6 +61,7 @@ func (q *MultiLevelPool) Pop() ([]*storage.Message, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Tracef("BLOBS %d", len(blobs))
 
 	// get min length
 	length := len(blobs)
@@ -67,25 +69,41 @@ func (q *MultiLevelPool) Pop() ([]*storage.Message, error) {
 		length = q.numOfMessages
 	}
 
-	messages := make([]*storage.Message, length)
+	messages := make([]*storage.Message, 0)
+	ch := make(chan *storage.Message)
+	defer close(ch)
+
 	for i := 0; i < length; i++ {
-		content, err := q.blobRepo.Read(&blobs[i])
-		if err != nil {
-			return nil, err
-		}
+		log.Tracef("BLOB %s", blobs[i].Name)
+		go func(blob *azurestorage.Blob, msgCh chan *storage.Message) {
+			content, err := q.blobRepo.Read(blob)
+			if err != nil {
+				log.Debug(err)
+				msgCh <- nil
+				return
+			}
 
-		msg := storage.Message{}
-		err = json.Unmarshal(content, &msg)
-		if err != nil {
-			return nil, err
-		}
+			msg := storage.Message{}
+			err = json.Unmarshal(content, &msg)
+			if err != nil {
+				log.Debug(err)
+				msgCh <- nil
+				return
+			}
 
-		messages[i] = &msg
+			if err := q.blobRepo.Delete(blob.Name); err != nil {
+				log.Debug(err)
+				msgCh <- nil
+				return
+			}
+
+			msgCh <- &msg
+		}(&blobs[i], ch)
 	}
 
 	for i := 0; i < length; i++ {
-		if err := q.blobRepo.Delete(blobs[i].Name); err != nil {
-			return nil, err
+		if msg := <-ch; msg != nil {
+			messages = append(messages, msg)
 		}
 	}
 

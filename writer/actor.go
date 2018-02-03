@@ -8,6 +8,7 @@ import (
 	"github.com/aquiladev/monday/database"
 	"github.com/aquiladev/monday/database/policy"
 	"github.com/aquiladev/monday/pool"
+	"github.com/aquiladev/monday/storage"
 )
 
 type Actor struct {
@@ -55,27 +56,38 @@ func (a *Actor) handleMessages() error {
 	}
 
 	messages, err := a.pool.Pop()
-	if err != nil {
+	if err != nil || len(messages) == 0 {
 		return err
 	}
+	log.Tracef("Retrieved %d messages", len(messages))
 
-	list := make([]*database.KeyValue, 0)
+	ch := make(chan error)
+	defer close(ch)
+
 	for _, m := range messages {
-		for _, k := range m.Keys {
-			list = append(list, &database.KeyValue{
-				K: []byte(k.PublicKey),
-				V: []byte(k.PrivateKey),
-			})
+		go func(msg *storage.Message, errCh chan error) {
+			log.Tracef("Retrieved %d keys", len(msg.Keys))
+
+			list := make([]*database.KeyValue, len(msg.Keys))
+			for i, k := range msg.Keys {
+				list[i] = &database.KeyValue{
+					K: []byte(k.PublicKey),
+					V: []byte(k.PrivateKey),
+				}
+			}
+
+			errCh <- a.db.PutBatch(list)
+		}(m, ch)
+	}
+
+	for i := 0; i < len(messages); i++ {
+		if resErr := <-ch; resErr != nil {
+			err = resErr
+			continue
 		}
 		a.handledLogMsg++
 	}
 
-	err = a.db.PutBatch(list)
-	if err != nil {
-		for _, m := range messages {
-			a.pool.Put(m)
-		}
-	}
 	return err
 }
 
