@@ -27,7 +27,9 @@ func (w *worker) Start() {
 
 	workerLog.Trace("Starting worker")
 
-	w.keyGenActor.Start()
+	if cfg.Generating {
+		w.keyGenActor.Start()
+	}
 
 	if cfg.KeepLocal {
 		w.writeActor.Start()
@@ -43,7 +45,9 @@ func (w *worker) Stop() error {
 
 	workerLog.Warn("Worker shutting down")
 
-	go w.keyGenActor.Stop()
+	if cfg.Generating {
+		go w.keyGenActor.Stop()
+	}
 
 	if cfg.KeepLocal {
 		go w.writeActor.Stop()
@@ -55,7 +59,9 @@ func (w *worker) Stop() error {
 }
 
 func (w *worker) WaitForShutdown() {
-	w.keyGenActor.WaitForShutdown()
+	if cfg.Generating {
+		w.keyGenActor.WaitForShutdown()
+	}
 
 	if cfg.KeepLocal {
 		w.writeActor.WaitForShutdown()

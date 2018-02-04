@@ -29,6 +29,7 @@ type config struct {
 	RangeUrl           string  `long:"rangeurl" description:"Endpoint for range retrieving."`
 	NumOfMessages      int     `long:"numofmessages" description:"Number of messages for handling."`
 	MemPoolCapacity    int     `long:"mempoolcapacity" description:"Memory pool capacity."`
+	Generating         bool    `long:"generating" description:"Generating of key pairs."`
 }
 
 const (
@@ -42,6 +43,7 @@ const (
 	defaultDiskUsage       = 95.0
 	defaultDbSize          = 214748364800 //200 Gb
 	sampleConfigFilename   = "sample.conf"
+	defaultGenerating      = true
 )
 
 var (
@@ -164,6 +166,7 @@ func loadConfig() (*config, []string, error) {
 		MaxDbSize:       defaultDbSize,
 		NumOfMessages:   defaultNumOfMessages,
 		MemPoolCapacity: defaultMemPoolCapacity,
+		Generating:      defaultGenerating,
 	}
 
 	// Pre-parse the command line options to see if an alternative config
