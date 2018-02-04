@@ -52,6 +52,8 @@ func (a *Actor) handleMessages() error {
 	}()
 
 	if err := a.checkPolicies(); err != nil {
+		// Stop writer
+		close(a.quit)
 		return err
 	}
 
